@@ -1,40 +1,29 @@
+// server.js
 import express from "express";
-import fs from "fs";
 import cors from "cors";
+import fs from "fs";
+import path from "path";
+import { fileURLToPath } from "url";
 
 const app = express();
 app.use(cors());
-app.use(express.json());
 
-const DATA_FILE = "./courses.json";
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = path.dirname(__filename);
 
-function readCourses() {
-  return JSON.parse(fs.readFileSync(DATA_FILE, "utf-8"));
-}
-
-function writeCourses(data) {
-  fs.writeFileSync(DATA_FILE, JSON.stringify(data, null, 2));
-}
+app.get("/", (req, res) => {
+  res.send("Mini E-Learning API is running.");
+});
 
 app.get("/courses", (req, res) => {
-  const data = readCourses();
-  res.json(data);
+  const filePath = path.join(__dirname, "courses.json");
+  if (!fs.existsSync(filePath)) {
+    return res.status(404).json({ error: "courses.json not found" });
+  }
+  const data = fs.readFileSync(filePath, "utf8");
+  const courses = JSON.parse(data);
+  res.json(courses);
 });
 
-app.get("/courses/:id", (req, res) => {
-  const data = readCourses();
-  const course = data.find((c) => c.id === Number(req.params.id));
-  if (!course) return res.status(404).json({ error: "Course not found" });
-  res.json(course);
-});
-
-app.post("/courses/:id/complete", (req, res) => {
-  const data = readCourses();
-  const index = data.findIndex((c) => c.id === Number(req.params.id));
-  if (index === -1) return res.status(404).json({ error: "Not found" });
-  data[index].completed = true;
-  writeCourses(data);
-  res.json(data[index]);
-});
-
-app.listen(3000, () => console.log("✅ Backend running on http://localhost:3000"));
+const PORT = process.env.PORT || 3000;
+app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
