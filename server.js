@@ -29,15 +29,20 @@ const PORT = process.env.PORT || 3000;
 app.get("/debug", (req, res) => {
   try {
     const routes = [];
-    app._router.stack.forEach((middleware) => {
-      if (middleware.route) {
-        routes.push(middleware.route.path);
-      } else if (middleware.name === "router" && middleware.handle.stack) {
-        middleware.handle.stack.forEach((handler) => {
-          if (handler.route) routes.push(handler.route.path);
+
+    // iterate over the internal router stack safely
+    app._router.stack.forEach(layer => {
+      if (layer.route && layer.route.path) {
+        routes.push(layer.route.path);
+      } else if (layer.name === 'router' && layer.handle && Array.isArray(layer.handle.stack)) {
+        layer.handle.stack.forEach(inner => {
+          if (inner.route && inner.route.path) {
+            routes.push(inner.route.path);
+          }
         });
       }
     });
+
     res.json({ routes });
   } catch (err) {
     console.error("Debug route error:", err);
