@@ -27,9 +27,22 @@ app.get("/courses", (req, res) => {
 
 const PORT = process.env.PORT || 3000;
 app.get("/debug", (req, res) => {
-  const routes = app._router.stack
-    .map(r => (r.route && r.route.path ? r.route.path : null))
-    .filter(Boolean);
-  res.json({ routes });
+  try {
+    const routes = [];
+    app._router.stack.forEach((middleware) => {
+      if (middleware.route) {
+        routes.push(middleware.route.path);
+      } else if (middleware.name === "router" && middleware.handle.stack) {
+        middleware.handle.stack.forEach((handler) => {
+          if (handler.route) routes.push(handler.route.path);
+        });
+      }
+    });
+    res.json({ routes });
+  } catch (err) {
+    console.error("Debug route error:", err);
+    res.status(500).json({ error: err.message });
+  }
 });
+
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
