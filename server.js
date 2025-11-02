@@ -26,4 +26,10 @@ app.get("/courses", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
+app.get("/debug", (req, res) => {
+  const routes = app._router.stack
+    .map(r => (r.route && r.route.path ? r.route.path : null))
+    .filter(Boolean);
+  res.json({ routes });
+});
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
