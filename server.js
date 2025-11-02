@@ -26,28 +26,11 @@ app.get("/courses", (req, res) => {
 });
 
 const PORT = process.env.PORT || 3000;
-app.get("/debug", (req, res) => {
-  try {
-    const routes = [];
-
-    // iterate over the internal router stack safely
-    app._router.stack.forEach(layer => {
-      if (layer.route && layer.route.path) {
-        routes.push(layer.route.path);
-      } else if (layer.name === 'router' && layer.handle && Array.isArray(layer.handle.stack)) {
-        layer.handle.stack.forEach(inner => {
-          if (inner.route && inner.route.path) {
-            routes.push(inner.route.path);
-          }
-        });
-      }
-    });
-
-    res.json({ routes });
-  } catch (err) {
-    console.error("Debug route error:", err);
-    res.status(500).json({ error: err.message });
-  }
-});
-
+// simple route logger
+if (app._router && Array.isArray(app._router.stack)) {
+  const activeRoutes = app._router.stack
+    .filter(layer => layer.route && layer.route.path)
+    .map(layer => layer.route.path);
+  console.log("Active routes:", activeRoutes);
+}
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
